@@ -3,13 +3,13 @@ from app.config import get_settings
 
 settings = get_settings()
 
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
 async def generate_product_description(
     product_name: str, category: str
 ) -> str:
-    """Generate a 2-line marketing description using Gemini API."""
+    """Generate a 2-line marketing description using Groq API."""
     prompt = (
         f"Write a concise, professional 2-line marketing description for the following product.\n"
         f"Product Name: {product_name}\n"
@@ -23,18 +23,20 @@ async def generate_product_description(
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
-            GEMINI_URL,
-            params={"key": settings.gemini_api_key},
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {settings.groq_api_key}",
+                "Content-Type": "application/json",
+            },
             json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 150,
-                },
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.7,
+                "max_tokens": 150,
             },
         )
         response.raise_for_status()
         data = response.json()
 
-    text = data["candidates"][0]["content"]["parts"][0]["text"]
+    text = data["choices"][0]["message"]["content"]
     return text.strip()

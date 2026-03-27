@@ -25,7 +25,7 @@ async def generate_description(
     data: GenerateDescriptionRequest,
     current_user: User = Depends(get_current_user),
 ):
-    if not settings.gemini_api_key:
+    if not settings.groq_api_key:
         raise HTTPException(status_code=503, detail="AI service not configured")
 
     try:

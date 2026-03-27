@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.user import User
 from app.models.purchase_order import PurchaseOrder, PurchaseOrderItem, POStatus
@@ -65,7 +66,11 @@ async def list_purchase_orders(
 
     total = (await db.execute(count_query)).scalar_one()
     result = await db.execute(
-        query.order_by(PurchaseOrder.created_at.desc())
+        query.options(
+            selectinload(PurchaseOrder.vendor),
+            selectinload(PurchaseOrder.items),
+        )
+        .order_by(PurchaseOrder.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -103,8 +108,13 @@ async def get_purchase_order(
     current_user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(PurchaseOrder).where(
+        select(PurchaseOrder)
+        .where(
             PurchaseOrder.id == po_id, PurchaseOrder.is_deleted == False
+        )
+        .options(
+            selectinload(PurchaseOrder.vendor),
+            selectinload(PurchaseOrder.items).selectinload(PurchaseOrderItem.product),
         )
     )
     po = result.scalar_one_or_none()

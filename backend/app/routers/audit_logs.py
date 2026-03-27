@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.user import User
 from app.models.audit_log import AuditLog
@@ -49,7 +50,8 @@ async def list_audit_logs(
 
     total = (await db.execute(count_query)).scalar_one()
     result = await db.execute(
-        query.order_by(AuditLog.created_at.desc())
+        query.options(selectinload(AuditLog.user))
+        .order_by(AuditLog.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
