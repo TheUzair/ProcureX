@@ -21,10 +21,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS
+# CORS — support comma-separated origins for production + local dev
+allowed_origins = [
+    origin.strip()
+    for origin in settings.frontend_url.split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
