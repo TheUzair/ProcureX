@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createSession, deleteSession } from "@/lib/session";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function loginAction(formData: {
   login: string;
