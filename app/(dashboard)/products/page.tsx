@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon, SparklesIcon, CubeIcon } from "@heroicons/react/24/outline";
 import { productSchema, type ProductFormData } from "@/lib/validators";
 import { apiClient } from "@/lib/api-client";
 import type { Product, PaginatedResponse } from "@/types";
@@ -119,11 +119,11 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Products</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+          <p className="mt-1 text-muted-foreground">Manage your product catalog</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger render={<Button onClick={openCreate} className="gradient-primary text-white border-0 hover:opacity-90" />}>
+          <DialogTrigger render={<Button onClick={openCreate} className="gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all" />}>
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Product
           </DialogTrigger>
@@ -197,18 +197,22 @@ export default function ProductsPage() {
 
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-2xl" />)}
         </div>
       ) : products.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No products found.
+          <CardContent className="flex flex-col items-center py-16 text-center text-muted-foreground">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
+              <CubeIcon className="h-8 w-8" />
+            </div>
+            <p className="mt-4 text-base font-medium">No products found</p>
+            <p className="mt-1 text-sm">Add your first product to get started</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <Card key={product.id}>
+            <Card key={product.id} className="card-hover">
               <CardHeader className="flex flex-row items-start justify-between pb-2">
                 <div>
                   <CardTitle className="text-base">{product.name}</CardTitle>

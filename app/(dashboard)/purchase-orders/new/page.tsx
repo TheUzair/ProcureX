@@ -1,54 +1,67 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { purchaseOrderSchema } from "@/lib/validators";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { apiClient } from "@/lib/api-client";
 import type { Vendor, Product, PaginatedResponse } from "@/types";
-import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { z } from "zod";
 
-type POFormData = z.infer<typeof purchaseOrderSchema>;
+interface LineItem {
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  product_name: string;
+  product_sku: string;
+  amount: number;
+}
 
 export default function NewPurchaseOrderPage() {
   const router = useRouter();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<POFormData>({
-    resolver: zodResolver(purchaseOrderSchema),
-    defaultValues: {
-      vendor_id: "",
-      items: [{ product_id: "", quantity: 1 }],
-      shipping_cost: 0,
-      discount: 0,
-      notes: "",
-    },
-  });
+  // Form header fields
+  const [vendorId, setVendorId] = useState("");
+  const [notes, setNotes] = useState("");
+  const [shippingCost, setShippingCost] = useState(0);
+  const [discount, setDiscount] = useState(0);
 
-  const { fields, append, remove } = useFieldArray({ control, name: "items" });
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const watchedItems = watch("items");
-  const watchedShipping = watch("shipping_cost");
-  const watchedDiscount = watch("discount");
+  // Line items
+  const [lines, setLines] = useState<LineItem[]>([
+    { product_id: "", quantity: 1, unit_price: 0, product_name: "", product_sku: "", amount: 0 },
+  ]);
+
+  // Errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const loadData = useCallback(async () => {
+    setLoading(true);
     try {
       const [vendorRes, productRes] = await Promise.all([
         apiClient.getVendors({ page_size: 100 }) as Promise<PaginatedResponse<Vendor>>,
@@ -58,6 +71,8 @@ export default function NewPurchaseOrderPage() {
       setProducts(productRes.items);
     } catch {
       // API not available
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -65,148 +80,283 @@ export default function NewPurchaseOrderPage() {
     loadData();
   }, [loadData]);
 
-  // Live price calculation
-  const subtotal = watchedItems.reduce((sum, item) => {
-    const product = products.find((p) => p.id === item.product_id);
-    return sum + Number(product?.unit_price || 0) * (item.quantity || 0);
-  }, 0);
-  const tax = subtotal * 0.05;
-  const total = subtotal + tax + (watchedShipping || 0) - (watchedDiscount || 0);
+  // ─── Line item handlers ───
+  const handleLineProductChange = (index: number, productId: string) => {
+    const product = products.find((p) => p.id === productId);
+    setLines((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        product_id: productId,
+        unit_price: Number(product?.unit_price || 0),
+        product_name: product?.name || "",
+        product_sku: product?.sku || "",
+        amount: Number(product?.unit_price || 0) * (updated[index].quantity || 0),
+      };
+      return updated;
+    });
+  };
 
-  const onSubmit = async (data: POFormData) => {
+  const handleLineQtyChange = (index: number, qty: number) => {
+    setLines((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        quantity: qty,
+        amount: (updated[index].unit_price || 0) * qty,
+      };
+      return updated;
+    });
+  };
+
+  const addLine = () => {
+    setLines((prev) => [
+      ...prev,
+      { product_id: "", quantity: 1, unit_price: 0, product_name: "", product_sku: "", amount: 0 },
+    ]);
+  };
+
+  const removeLine = (index: number) => {
+    if (lines.length <= 1) return;
+    setLines((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // ─── Calculations ───
+  const subtotal = lines.reduce((sum, l) => sum + l.amount, 0);
+  const tax = subtotal * 0.05;
+  const total = subtotal + tax + shippingCost - discount;
+
+  // ─── Validation ───
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!vendorId) errs.vendor = "Vendor is required";
+    const validLines = lines.filter((l) => l.product_id);
+    if (validLines.length === 0) errs.items = "At least one item is required";
+    lines.forEach((l, i) => {
+      if (!l.product_id) errs[`line_${i}_product`] = "Select a product";
+      if (!l.quantity || l.quantity < 1) errs[`line_${i}_qty`] = "Qty must be >= 1";
+    });
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  // ─── Submit ───
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    setIsSubmitting(true);
     try {
-      await apiClient.createPurchaseOrder(data as unknown as Record<string, unknown>);
+      await apiClient.createPurchaseOrder({
+        vendor_id: vendorId,
+        items: lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity })),
+        shipping_cost: shippingCost,
+        discount,
+        notes,
+      });
       toast.success("Purchase order created!");
       router.push("/purchase-orders");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create PO");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-4">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-[600px] w-full rounded-2xl" />
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
+      {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold">Create Purchase Order</h1>
-        <p className="text-muted-foreground">Fill in the details for a new purchase order</p>
+        <h1 className="text-3xl font-bold tracking-tight">Create Purchase Order</h1>
+        <p className="mt-1 text-muted-foreground">Fill in the details for a new purchase order</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Vendor */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Vendor</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardContent className="p-6 space-y-6">
+          {/* ─── Header Fields ─── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Select Vendor</Label>
-              <Select
-                value={watch("vendor_id")}
-                onValueChange={(v) => setValue("vendor_id", v ?? "")}
+              <Label>
+                Vendor <span className="text-destructive">*</span>
+              </Label>
+              <Combobox
+                items={vendors}
+                itemToStringValue={(v) => v.name}
+                value={vendors.find((v) => v.id === vendorId) ?? null}
+                onValueChange={(v) => setVendorId(v?.id ?? "")}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a vendor..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {vendors.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.vendor_id && (
-                <p className="text-sm text-destructive">{errors.vendor_id.message}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Items */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Items</CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => append({ product_id: "", quantity: 1 })}
-            >
-              <PlusIcon className="mr-1 h-4 w-4" />
-              Add Item
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {fields.map((field, index) => {
-              const product = products.find((p) => p.id === watchedItems[index]?.product_id);
-              return (
-                <div key={field.id} className="flex items-start gap-3">
-                  <div className="flex-1 space-y-2">
-                    <Select
-                      value={watchedItems[index]?.product_id || ""}
-                      onValueChange={(v) => setValue(`items.${index}.product_id`, v ?? "")}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select product..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name} ({p.sku}) — ${p.unit_price}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.items?.[index]?.product_id && (
-                      <p className="text-sm text-destructive">
-                        {errors.items[index].product_id?.message}
-                      </p>
+                <ComboboxInput placeholder="Search vendors..." className="w-full" />
+                <ComboboxContent>
+                  <ComboboxEmpty>No vendors found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(vendor) => (
+                      <ComboboxItem key={vendor.id} value={vendor}>
+                        <div>
+                          <p className="font-medium">{vendor.name}</p>
+                          {vendor.email && <p className="text-xs text-muted-foreground">{vendor.email}</p>}
+                        </div>
+                      </ComboboxItem>
                     )}
-                  </div>
-                  <div className="w-24 space-y-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      placeholder="Qty"
-                      {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                    />
-                  </div>
-                  <div className="w-24 pt-2 text-right text-sm font-medium">
-                    ${(Number(product?.unit_price || 0) * (watchedItems[index]?.quantity || 0)).toFixed(2)}
-                  </div>
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0 text-destructive hover:text-destructive"
-                      onClick={() => remove(index)}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-            {errors.items?.message && (
-              <p className="text-sm text-destructive">{errors.items.message}</p>
-            )}
-          </CardContent>
-        </Card>
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+              {errors.vendor && <p className="text-sm text-destructive">{errors.vendor}</p>}
+            </div>
 
-        {/* Additional costs */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Additional</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional remarks..."
+                rows={1}
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* ─── Line Items ─── */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <Label className="text-lg font-semibold">Line Items</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addLine}>
+                <PlusIcon className="h-4 w-4 mr-1" />
+                Add Line
+              </Button>
+            </div>
+            {errors.items && <p className="text-sm text-destructive mb-2">{errors.items}</p>}
+
+            <div className="overflow-x-auto border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="text-xs uppercase">Product</TableHead>
+                    <TableHead className="text-xs uppercase w-24">SKU</TableHead>
+                    <TableHead className="text-xs uppercase w-28 text-right">Qty</TableHead>
+                    <TableHead className="text-xs uppercase w-32 text-right">Unit Price</TableHead>
+                    <TableHead className="text-xs uppercase w-32 text-right">Amount</TableHead>
+                    <TableHead className="text-xs uppercase w-20 text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lines.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No lines added. Click &quot;Add Line&quot; to start.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    lines.map((line, index) => (
+                      <TableRow key={index}>
+                        {/* Product */}
+                        <TableCell className="py-2">
+                          <Combobox
+                            items={products}
+                            itemToStringValue={(p) => p.name}
+                            value={products.find((p) => p.id === line.product_id) ?? null}
+                            onValueChange={(p) => handleLineProductChange(index, p?.id ?? "")}
+                          >
+                            <ComboboxInput placeholder="Search products..." className="min-w-[220px]" />
+                            <ComboboxContent>
+                              <ComboboxEmpty>No products found.</ComboboxEmpty>
+                              <ComboboxList>
+                                {(product) => (
+                                  <ComboboxItem key={product.id} value={product}>
+                                    <div>
+                                      <p className="font-medium">{product.name}</p>
+                                      <p className="text-xs text-muted-foreground">{product.sku} — ${Number(product.unit_price).toFixed(2)}</p>
+                                    </div>
+                                  </ComboboxItem>
+                                )}
+                              </ComboboxList>
+                            </ComboboxContent>
+                          </Combobox>
+                          {errors[`line_${index}_product`] && (
+                            <p className="text-xs text-destructive mt-1">
+                              {errors[`line_${index}_product`]}
+                            </p>
+                          )}
+                        </TableCell>
+                        {/* SKU */}
+                        <TableCell className="text-muted-foreground text-sm py-2">
+                          {line.product_sku || "—"}
+                        </TableCell>
+                        {/* Quantity */}
+                        <TableCell className="py-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            value={line.quantity}
+                            onChange={(e) =>
+                              handleLineQtyChange(index, parseInt(e.target.value, 10) || 0)
+                            }
+                            className="w-24 text-right ml-auto"
+                          />
+                          {errors[`line_${index}_qty`] && (
+                            <p className="text-xs text-destructive mt-1">
+                              {errors[`line_${index}_qty`]}
+                            </p>
+                          )}
+                        </TableCell>
+                        {/* Unit Price */}
+                        <TableCell className="text-right font-medium py-2">
+                          ${line.unit_price.toFixed(2)}
+                        </TableCell>
+                        {/* Amount */}
+                        <TableCell className="text-right font-semibold py-2">
+                          ${line.amount.toFixed(2)}
+                        </TableCell>
+                        {/* Actions */}
+                        <TableCell className="text-center py-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={lines.length <= 1}
+                            onClick={() => removeLine(index)}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Total Amount */}
+            <div className="flex justify-end mt-2">
+              <p className="text-sm font-semibold">
+                Items Total:
+                <span className="ml-2 text-base">${subtotal.toFixed(2)}</span>
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* ─── Additional Costs ─── */}
+          <div>
+            <Label className="text-lg font-semibold mb-3 block">Additional Costs</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Shipping Cost</Label>
                 <Input
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register("shipping_cost", { valueAsNumber: true })}
+                  value={shippingCost}
+                  onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
                 />
               </div>
               <div className="space-y-2">
@@ -215,63 +365,60 @@ export default function NewPurchaseOrderPage() {
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register("discount", { valueAsNumber: true })}
+                  value={discount}
+                  onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea placeholder="Optional notes..." {...register("notes")} />
-            </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Summary */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2 text-sm">
+          <Separator />
+
+          {/* ─── Order Summary ─── */}
+          <div className="flex justify-end">
+            <div className="w-full max-w-xs space-y-2.5 rounded-xl bg-muted/30 p-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span className="tabular-nums">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax (5%)</span>
-                <span>${tax.toFixed(2)}</span>
+                <span className="tabular-nums">${tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
-                <span>${(watchedShipping || 0).toFixed(2)}</span>
+                <span className="tabular-nums">${shippingCost.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Discount</span>
-                <span>-${(watchedDiscount || 0).toFixed(2)}</span>
+                <span className="tabular-nums text-green-600">-${discount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between border-t pt-2 text-base font-bold">
+              <Separator />
+              <div className="flex justify-between text-base font-bold">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span className="tabular-nums">${total.toFixed(2)}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1"
-            onClick={() => router.back()}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 gradient-primary text-white border-0 hover:opacity-90"
-          >
-            {isSubmitting ? "Creating..." : "Create Purchase Order"}
-          </Button>
-        </div>
-      </form>
+          <Separator />
+
+          {/* ─── Actions ─── */}
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => router.back()}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isSubmitting}
+              className="gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all"
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? "Creating..." : "Create Purchase Order"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

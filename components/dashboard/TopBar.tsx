@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import { Bars3Icon, ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
@@ -28,7 +28,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
     : user?.username?.slice(0, 2).toUpperCase() || "U";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-4">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 bg-card/60 px-4 backdrop-blur-xl lg:px-6">
       <button
         onClick={onMenuClick}
         className="rounded-md p-1 hover:bg-muted lg:hidden"
@@ -37,8 +37,17 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
       </button>
       <div className="hidden lg:block" />
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <ThemeToggle />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden gap-1.5 text-muted-foreground hover:text-destructive sm:flex"
+          onClick={() => logoutAction()}
+        >
+          <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
+          <span className="text-xs">Sign Out</span>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full" />}>
             <Avatar className="h-8 w-8">

@@ -46,7 +46,7 @@ export default function AboutPage() {
 
         {/* Vision & Mission */}
         <div className="mx-auto mt-20 grid max-w-5xl gap-12 lg:grid-cols-2">
-          <div className="rounded-xl border bg-card p-8 shadow-sm">
+          <div className="card-hover rounded-2xl border bg-card p-8 shadow-sm">
             <h2 className="text-2xl font-bold">Our Vision</h2>
             <p className="mt-4 text-muted-foreground leading-7">
               A world where every organization — from startups to enterprises —
@@ -54,7 +54,7 @@ export default function AboutPage() {
               envision procurement as a strategic advantage, not a bottleneck.
             </p>
           </div>
-          <div className="rounded-xl border bg-card p-8 shadow-sm">
+          <div className="card-hover rounded-2xl border bg-card p-8 shadow-sm">
             <h2 className="text-2xl font-bold">Our Mission</h2>
             <p className="mt-4 text-muted-foreground leading-7">
               To deliver a SaaS platform that simplifies every step of the

@@ -36,8 +36,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card transition-all duration-300 lg:relative lg:z-auto",
-        collapsed ? "w-16" : "w-64",
+        "fixed inset-y-0 left-0 z-50 flex flex-col bg-card/95 shadow-[1px_0_25px_rgba(0,0,0,0.05)] backdrop-blur-xl transition-all duration-300 ease-in-out dark:bg-card/90 dark:shadow-[1px_0_25px_rgba(0,0,0,0.2)] lg:relative lg:z-auto",
+        collapsed ? "w-14" : "w-56",
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}
     >
@@ -75,14 +75,18 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
               key={item.href}
               href={item.href}
               onClick={onMobileClose}
+              title={collapsed ? item.label : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary/15 text-primary shadow-[0_0_20px_rgba(99,102,241,0.1)] dark:bg-primary/20"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
               )}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
+              {isActive && (
+                <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-primary shadow-[0_0_10px_var(--color-primary)]" />
+              )}
+              <item.icon className={cn("h-5 w-5 shrink-0 transition-all duration-300 group-hover:scale-110", isActive && "ml-0.5 scale-110 drop-shadow-sm")} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );

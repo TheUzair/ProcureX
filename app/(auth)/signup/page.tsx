@@ -38,9 +38,9 @@ export default function SignupPage() {
   };
 
   return (
-    <Card>
+    <Card className="shadow-lg">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create your account</CardTitle>
+        <CardTitle className="text-2xl font-bold tracking-tight">Create your account</CardTitle>
         <CardDescription>Get started with ProcureX for free</CardDescription>
       </CardHeader>
       <CardContent>
@@ -122,7 +122,7 @@ export default function SignupPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full gradient-primary text-white border-0 hover:opacity-90"
+            className="w-full gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all"
           >
             {isSubmitting ? "Creating account..." : "Create Account"}
           </Button>

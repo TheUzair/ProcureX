@@ -80,7 +80,7 @@ export default function ContactPage() {
           </div>
 
           {/* Form */}
-          <div className="rounded-xl border bg-card p-8 shadow-sm lg:col-span-3">
+          <div className="rounded-2xl border bg-card p-8 shadow-sm lg:col-span-3">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -135,7 +135,7 @@ export default function ContactPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full gradient-primary text-white border-0 hover:opacity-90"
+                className="w-full gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all"
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
               </Button>

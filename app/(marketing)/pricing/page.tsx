@@ -79,13 +79,13 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-3">
+        <div className="mx-auto mt-20 grid max-w-5xl gap-8 lg:grid-cols-3">
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative flex flex-col ${plan.highlighted
-                ? "border-primary shadow-lg shadow-primary/10 scale-105"
-                : ""
+              className={`relative flex flex-col transition-all duration-300 ${plan.highlighted
+                ? "border-primary shadow-xl shadow-primary/15 scale-105"
+                : "card-hover"
                 }`}
             >
               {plan.highlighted && (
@@ -122,7 +122,7 @@ export default function PricingPage() {
                   className={cn(
                     buttonVariants({ variant: plan.variant as "default" | "outline" }),
                     "w-full",
-                    plan.highlighted && "gradient-primary text-white border-0 hover:opacity-90"
+                    plan.highlighted && "gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all"
                   )}
                 >
                   {plan.cta}

@@ -45,8 +45,8 @@ export default function AuditLogsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Audit Logs</h1>
-        <p className="text-muted-foreground">Track all changes across your system</p>
+        <h1 className="text-3xl font-bold tracking-tight">Audit Logs</h1>
+        <p className="mt-1 text-muted-foreground">Track all changes across your system</p>
       </div>
 
       <div className="flex gap-4">
@@ -71,30 +71,34 @@ export default function AuditLogsPage() {
         <CardContent>
           {loading ? (
             <div className="space-y-3">
-              {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+              {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-18 w-full rounded-xl" />)}
             </div>
           ) : logs.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">
-              No audit logs found.
+            <div className="flex flex-col items-center py-16 text-center text-muted-foreground">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+              </div>
+              <p className="mt-4 text-base font-medium">No audit logs found</p>
+              <p className="mt-1 text-sm">Activity will appear here as changes are made</p>
             </div>
           ) : (
             <div className="space-y-3">
               {logs.map((log) => (
-                <div key={log.id} className="flex items-start justify-between rounded-lg border p-4">
-                  <div className="space-y-1">
+                <div key={log.id} className="flex items-start justify-between rounded-xl border p-4 transition-colors duration-150 hover:bg-muted/30">
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className={actionColors[log.action] || ""}>
                         {log.action}
                       </Badge>
-                      <span className="text-sm font-medium capitalize">
+                      <span className="text-sm font-semibold capitalize">
                         {log.entity_type.replace("_", " ")}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      by {log.username || "System"} &middot; Entity ID: {log.entity_id.slice(0, 8)}...
+                      by <span className="font-medium text-foreground">{log.username || "System"}</span> &middot; Entity ID: <span className="font-mono text-xs">{log.entity_id.slice(0, 8)}...</span>
                     </p>
                   </div>
-                  <time className="text-xs text-muted-foreground">
+                  <time className="text-xs text-muted-foreground whitespace-nowrap">
                     {new Date(log.created_at).toLocaleString()}
                   </time>
                 </div>

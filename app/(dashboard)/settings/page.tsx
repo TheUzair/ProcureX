@@ -10,33 +10,33 @@ export default function SettingsPage() {
   const { user } = useAuth();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account preferences</p>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="mt-1 text-muted-foreground">Manage your account preferences</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle className="text-lg">Profile</CardTitle>
           <CardDescription>Your account information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Username</p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Username</p>
               <p className="font-medium">{user?.username || "—"}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</p>
               <p className="font-medium">{user?.email || "—"}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Full Name</p>
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Full Name</p>
               <p className="font-medium">{user?.full_name || "—"}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Mobile</p>
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Mobile</p>
               <p className="font-medium">{user?.mobile || "—"}</p>
             </div>
           </div>

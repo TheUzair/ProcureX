@@ -95,11 +95,11 @@ export default function VendorsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Vendors</h1>
-          <p className="text-muted-foreground">Manage your vendor directory</p>
+          <h1 className="text-3xl font-bold tracking-tight">Vendors</h1>
+          <p className="mt-1 text-muted-foreground">Manage your vendor directory</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger render={<Button onClick={openCreate} className="gradient-primary text-white border-0 hover:opacity-90" />}>
+          <DialogTrigger render={<Button onClick={openCreate} className="gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all" />}>
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Vendor
           </DialogTrigger>
@@ -156,19 +156,23 @@ export default function VendorsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-2xl" />)}
         </div>
       ) : vendors.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No vendors found.
+          <CardContent className="flex flex-col items-center py-16 text-center text-muted-foreground">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
+              <PlusIcon className="h-8 w-8" />
+            </div>
+            <p className="mt-4 text-base font-medium">No vendors found</p>
+            <p className="mt-1 text-sm">Add your first vendor to get started</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {vendors.map((vendor) => (
-            <Card key={vendor.id}>
+            <Card key={vendor.id} className="card-hover">
               <CardHeader className="flex flex-row items-start justify-between">
                 <CardTitle className="text-base">{vendor.name}</CardTitle>
                 <div className="flex gap-1">

@@ -32,9 +32,9 @@ export default function LoginPage() {
   };
 
   return (
-    <Card>
+    <Card className="shadow-lg">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
         <CardDescription>Sign in to your ProcureX account</CardDescription>
       </CardHeader>
       <CardContent>
@@ -78,7 +78,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full gradient-primary text-white border-0 hover:opacity-90"
+            className="w-full gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all"
           >
             {isSubmitting ? "Signing in..." : "Sign In"}
           </Button>

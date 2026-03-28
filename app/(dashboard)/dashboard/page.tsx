@@ -64,33 +64,35 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your procurement activity</p>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">Overview of your procurement activity</p>
         </div>
-        <Link href="/purchase-orders/new" className={cn(buttonVariants(), "gradient-primary text-white border-0 hover:opacity-90")}>
+        <Link href="/purchase-orders/new" className={cn(buttonVariants({ size: "lg" }), "gradient-primary text-white border-0 shadow-md hover:opacity-90 hover:shadow-lg transition-all")}>
           <PlusIcon className="mr-2 h-4 w-4" />
           New PO
         </Link>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {summaryCards.map((card) => (
-          <Card key={card.title}>
+          <Card key={card.title} className="card-hover">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {card.title}
               </CardTitle>
-              <card.icon className={`h-5 w-5 ${card.color}`} />
+              <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl", card.color.replace("text-", "bg-").replace("500", "500/10"))}>
+                <card.icon className={cn("h-5 w-5", card.color)} />
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <p className="text-2xl font-bold">{card.value}</p>
+                <p className="text-3xl font-bold tracking-tight">{card.value}</p>
               )}
             </CardContent>
           </Card>
@@ -100,7 +102,7 @@ export default function DashboardPage() {
       {/* Recent POs */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Purchase Orders</CardTitle>
+          <CardTitle className="text-lg">Recent Purchase Orders</CardTitle>
           <Link href="/purchase-orders" className={buttonVariants({ variant: "outline", size: "sm" })}>
             View All
           </Link>
@@ -109,14 +111,17 @@ export default function DashboardPage() {
           {loading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className="h-14 w-full rounded-xl" />
               ))}
             </div>
           ) : pos.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              <DocumentTextIcon className="mx-auto h-12 w-12 opacity-50" />
-              <p className="mt-2">No purchase orders yet</p>
-              <Link href="/purchase-orders/new" className={cn(buttonVariants({ variant: "outline" }), "mt-4")}>
+            <div className="flex flex-col items-center py-12 text-center text-muted-foreground">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
+                <DocumentTextIcon className="h-8 w-8" />
+              </div>
+              <p className="mt-4 text-base font-medium">No purchase orders yet</p>
+              <p className="mt-1 text-sm">Create your first purchase order to get started</p>
+              <Link href="/purchase-orders/new" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>
                 Create your first PO
               </Link>
             </div>
@@ -126,21 +131,21 @@ export default function DashboardPage() {
                 <Link
                   key={po.id}
                   href={`/purchase-orders/${po.id}`}
-                  className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                  className="flex items-center justify-between rounded-xl border p-4 transition-all duration-200 hover:bg-muted/40 hover:shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <div>
-                      <p className="font-medium">{po.reference_number}</p>
+                      <p className="font-semibold">{po.reference_number}</p>
                       <p className="text-sm text-muted-foreground">
                         {po.vendor_name || "Unknown Vendor"} &middot; {po.items_count} items
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <Badge variant="secondary" className={statusColors[po.status]}>
                       {po.status.replace("_", " ")}
                     </Badge>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-semibold tabular-nums">
                       ${po.total.toLocaleString()}
                     </span>
                   </div>
