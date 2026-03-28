@@ -46,6 +46,16 @@ app.include_router(audit_logs.router, prefix="/api/audit-logs", tags=["Audit Log
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 
 
+@app.get("/")
+async def root():
+    return {
+        "service": "ProcureX API",
+        "version": "1.0.0",
+        "status": "healthy",
+        "docs": "/docs",
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "service": "ProcureX API"}
