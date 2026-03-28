@@ -165,7 +165,7 @@ export default function NewPurchaseOrderPage() {
     return (
       <div className="mx-auto max-w-5xl space-y-4">
         <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-[600px] w-full rounded-2xl" />
+        <Skeleton className="h-150 w-full rounded-2xl" />
       </div>
     );
   }
@@ -264,7 +264,7 @@ export default function NewPurchaseOrderPage() {
                             value={products.find((p) => p.id === line.product_id) ?? null}
                             onValueChange={(p) => handleLineProductChange(index, p?.id ?? "")}
                           >
-                            <ComboboxInput placeholder="Search products..." className="min-w-[220px]" />
+                            <ComboboxInput placeholder="Search products..." className="min-w-55" />
                             <ComboboxContent>
                               <ComboboxEmpty>No products found.</ComboboxEmpty>
                               <ComboboxList>

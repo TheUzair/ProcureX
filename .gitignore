@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+.vscode/
 
 # debug
 npm-debug.log*
@@ -45,3 +46,5 @@ __pycache__/
 *.py[cod]
 backend/venv/
 backend/.env
+
+.vercel
